@@ -1,0 +1,74 @@
+local replicatedStorage = game:GetService("ReplicatedStorage")
+local Ball = workspace.Ball
+local Destination_Left = workspace.Destination_Left
+local Destination_Right = workspace.Destination_Right
+local promptLeft = Ball.ProximityPrompt_L
+local promptRight = Ball.ProximityPrompt_R
+local StartPosition = Ball.Position
+
+local KickHeight = 30
+
+-- Función para interpolación lineal
+function lerp(a, b, t)
+	return a + (b - a) * t
+end
+
+function quadraticBezier(t, p0, p1, p2)
+	local l1 = lerp(p0, p1, t)
+	local l2 = lerp(p1, p2, t)
+	local quad = lerp(l1, l2, t)
+	return quad
+end
+
+-- Función para manejar el tiro
+local function manejarTiro(player, direccion)
+	local character = player.Character
+	local humanoid = character.Humanoid
+	local animator = humanoid.Animator
+	local KickAnimation = animator:LoadAnimation(script.KickAnimation)
+
+	-- Posicionar la pelota frente al jugador y prepararla para el tiro
+	Ball.CFrame = character.HumanoidRootPart.CFrame + Vector3.new(0, 0, 1)
+	Ball.Anchored = false
+	task.wait(1)
+
+	if direccion == "izquierda" then
+		replicatedStorage.ToggleLeft:FireClient(player, true)
+	elseif direccion == "derecha" then
+		replicatedStorage.ToggleRight:FireClient(player, true)
+	end
+
+	task.wait(0.3)
+	KickAnimation:Play()
+
+	local startPos = Ball.Position
+	local dest = direccion == "izquierda" and Destination_Left.Position or Destination_Right.Position
+
+	-- Configuración del movimiento del balón
+	task.spawn(function()
+		for i = 0, 1, 0.02 do
+			Ball.CFrame = CFrame.new(quadraticBezier(i, startPos, (startPos + dest) / 2 + Vector3.new(0, KickHeight, 0), dest))
+			task.wait(0.02) -- Hacer el movimiento más lento
+		end
+		-- Mover el balón de vuelta a la posición inicial
+		Ball.CFrame = CFrame.new(startPos)
+		Ball.Anchored = true
+	end)
+
+	task.wait()
+	if direccion == "izquierda" then
+		replicatedStorage.ToggleLeft:FireClient(player, false)
+	elseif direccion == "derecha" then
+		replicatedStorage.ToggleRight:FireClient(player, false)
+	end
+end
+
+promptLeft.Triggered:Connect(function(player)
+	manejarTiro(player, "izquierda")
+	comprobarRespuesta(true, player)
+end)
+
+promptRight.Triggered:Connect(function(player)
+	manejarTiro(player, "derecha")
+	comprobarRespuesta(false, player)
+end)

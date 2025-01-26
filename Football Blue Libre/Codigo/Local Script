@@ -1,0 +1,13 @@
+local players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local player = players.LocalPlayer
+local controls = require(player.WaitForChild("PlayerScripts"):WaitForChild("PlayerModule")):GetControls()
+
+	ReplicatedStorage:WaitForChild("ToggleLeft"):WaitForChild("ToggleRight").OnClientEvent:Connect(function(boolean)
+		if boolean == true then
+			controls:Disable()
+		else
+			controls:Enable()
+		end
+	end)

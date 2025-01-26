@@ -1,8 +1,0 @@
--- En el Explorador, selecciona el arco y añade una SurfaceGui
-local surfaceGui = Instance.new("SurfaceGui")
-surfaceGui.Parent = game.Workspace.Arco -- Asegúrate de que "Arco" es el nombre del arco
-
-local textLabel = Instance.new("TextLabel")
-textLabel.Size = UDim2.new(1, 0, 1, 0)
-textLabel.Text = "Pregunta aquí"
-textLabel.Parent = surfaceGui

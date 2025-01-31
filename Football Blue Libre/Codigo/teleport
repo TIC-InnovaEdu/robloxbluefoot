@@ -1,0 +1,11 @@
+local TeleportService = game:GetService("TeleportService")
+local lugarLobbyID = 89556124659157  -- Reemplaza el ID por el del lobby (place)
+
+game.ReplicatedStorage.RespuestasCorrectasEvent.OnServerEvent:Connect(function(player, respuestasCorrectas)
+	-- Si el jugador completó las 5 preguntas correctamente
+	if respuestasCorrectas == 5 then
+		-- Teletransportar al jugador al lobby
+		TeleportService:Teleport(lugarLobbyID, player)
+	end
+end)
+

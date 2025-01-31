@@ -1,0 +1,93 @@
+local Players = game:GetService("Players")
+local TeleportService = game:GetService("TeleportService")
+
+local detector = script.Parent.Parent.Detector
+local puerta = script.Parent
+
+local texto = script.Parent.SurfaceGui.Texto
+local cantidadActual = script.Parent.CantidadActual
+local foroJugadores = script.Parent.ForoJugadores.Value
+
+local confirmador = true
+
+local idPlace = 112732486119424  -- ID del lugar al que se quiere teletransportar
+local tablaJugadores = {}
+
+detector.Touched:Connect(function(hit)
+	if hit.Parent:FindFirstChild("Humanoid") then
+		if not hit.Parent:FindFirstChild("ConfirmadorJugando") and cantidadActual.Value <= foroJugadores then
+			local player = Players:GetPlayerFromCharacter(hit.Parent)
+
+			local confirmadorJugando = Instance.new("BoolValue")
+			confirmadorJugando.Name = "ConfirmadorJugando"
+			confirmadorJugando.Parent = hit.Parent
+
+			table.insert(tablaJugadores, player)
+
+			cantidadActual.Value = cantidadActual.Value + 1
+			texto.Text = cantidadActual.Value.."/"..foroJugadores.." Jugadores"
+		end
+	end
+end)
+
+detector.TouchEnded:Connect(function(hit)
+	if hit.Parent:FindFirstChild("Humanoid") then
+		if hit.Parent:FindFirstChild("ConfirmadorJugando") and confirmador == true then
+			hit.Parent.ConfirmadorJugando:Destroy()
+			for i, plr in pairs(tablaJugadores) do
+				if plr.Name == hit.Parent.Name then
+					table.remove(tablaJugadores , i)
+				end
+			end
+			cantidadActual.Value = cantidadActual.Value - 1
+			texto.Text = cantidadActual.Value.."/"..foroJugadores.." Jugadores"
+		end
+	end
+end)
+
+-- Evento para transportar Jugadores
+cantidadActual:GetPropertyChangedSignal("Value"):Connect(function()
+	if cantidadActual.Value == foroJugadores and confirmador == true then
+		confirmador = false
+		puerta.CanCollide = true
+
+		for i = 5, 1, -1 do
+			texto.Text = "Tiempo restante "..i
+			wait(1)
+		end
+
+		pcall(function()
+			for i, plr in pairs(tablaJugadores) do
+				if plr.Character then
+					if not plr.Character:FindFirstChild("ConfirmadorJugando") then
+						table.remove(tablaJugadores , i)
+					end
+				else
+					table.remove(tablaJugadores , i)
+				end
+			end
+		end)
+
+		-- Teletransportar jugadores individualmente
+		print("Iniciando teletransporte...")
+		for _, plr in pairs(tablaJugadores) do
+			if plr.Character then
+				print("Intentando teletransportar a: " .. plr.Name)
+				-- Teletransportar a cada jugador individualmente
+				local success, errorMessage = pcall(function()
+					TeleportService:TeleportAsync(idPlace, {plr})
+				end)
+				if not success then
+					warn("Error al teletransportar a " .. plr.Name .. ": " .. errorMessage)
+				end
+			end
+		end
+
+		-- No es necesario esperar 10 segundos, puedes limpiar inmediatamente
+		texto.Text = "Esperando Jugadores"
+		puerta.CanCollide = false
+		tablaJugadores = {}
+		cantidadActual.Value = 0
+		confirmador = true
+	end
+end)

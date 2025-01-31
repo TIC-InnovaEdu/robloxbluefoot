@@ -1,0 +1,39 @@
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local camera = game.Workspace.CurrentCamera
+local userInputService = game:GetService("UserInputService")
+
+-- Función que asegura que la cámara se quede en tercera persona
+local function bloquearCamara()
+	camera.CameraType = Enum.CameraType.Scriptable  -- Usamos Scriptable para controlar la cámara completamente
+	camera.CameraSubject = nil  -- No dejamos que la cámara siga a ningún objeto
+
+	-- Configuramos la cámara en una posición fija en tercera persona, alejada y centrada
+	local offset = Vector3.new(0, 20, 30)  -- Ajusta estos valores para controlar la distancia y altura de la cámara
+	camera.CFrame = CFrame.new(player.Character.HumanoidRootPart.Position + offset, player.Character.HumanoidRootPart.Position)
+
+	-- Bloquear cambios manuales de cámara y control
+	userInputService.InputChanged:Connect(function(input, gameProcessed)
+		if not gameProcessed then
+			-- Bloqueamos el movimiento de la cámara
+			if input.UserInputType == Enum.UserInputType.MouseMovement or
+				input.UserInputType == Enum.UserInputType.MouseWheel then
+				-- Evitamos que el jugador mueva la cámara
+				input:Capture()
+			end
+		end
+	end)
+end
+
+-- Cuando el jugador ingresa al juego
+player.CharacterAdded:Connect(function(character)
+	-- Bloquea la cámara cuando el personaje es cargado
+	bloquearCamara()
+end)
+
+-- También aseguramos que si el jugador respawnea la cámara se mantenga bloqueada
+player.CharacterRemoving:Connect(function()
+	-- Volver a bloquear la cámara si el jugador muere o respawnea
+	player.CharacterAdded:Wait()
+	bloquearCamara()
+end)

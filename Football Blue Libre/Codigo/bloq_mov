@@ -1,0 +1,124 @@
+script.Parent.Overlay.Visible = true
+wait(1)
+-- Variables --
+local ts = game:GetService("TweenService")
+local tweenTime = 0.1
+
+local creditsPage = script.Parent.CreditsFrame
+local newsPage = script.Parent.NewsFrame
+
+local prevWalkSpeed = game.Players.LocalPlayer.Character.Humanoid.WalkSpeed
+local prevJumpHeight = game.Players.LocalPlayer.Character.Humanoid.JumpPower
+local prevJumpPower = game.Players.LocalPlayer.Character.Humanoid.JumpHeight
+
+local blur = Instance.new("BlurEffect")
+blur.Parent = game.Lighting
+blur.Size = 24
+
+-- Events --
+game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 0
+game.Players.LocalPlayer.Character.Humanoid.JumpHeight = 0
+game.Players.LocalPlayer.Character.Humanoid.JumpPower = 0
+
+creditsPage.Position = UDim2.new(1.5,0,.5,0)
+newsPage.Position = UDim2.new(1.5,0,.5,0)
+
+creditsPage.Visible = true
+newsPage.Visible = true
+script.Parent.GameTitle.Visible = true
+script.Parent.Credits.Visible = true
+script.Parent.Play.Visible = true
+script.Parent.Frame.Visible = true
+
+wait(2)
+script.Parent.Overlay:TweenPosition(UDim2.new(-1, 0,0, 0),Enum.EasingDirection.Out,Enum.EasingStyle.Back,.6,true)
+
+local function moveMenu()
+	wait(.2)
+	script.Parent.GameTitle:TweenPosition(script.Parent.Play.Position + UDim2.new(0,0,-.8,0),Enum.EasingDirection.Out,Enum.EasingStyle.Back,.6,true)
+	wait(.1)
+	script.Parent.Play:TweenPosition(script.Parent.Play.Position + UDim2.new(-.8,0,0,0),Enum.EasingDirection.Out,Enum.EasingStyle.Back,.6,true)
+	wait(.1)
+	script.Parent.Credits:TweenPosition(script.Parent.Credits.Position + UDim2.new(-.8,0,0,0),Enum.EasingDirection.Out,Enum.EasingStyle.Back,.6,true)
+	wait(.3)
+end
+
+local function moveBackMenu()
+	wait(.2)
+	script.Parent.GameTitle:TweenPosition(UDim2.new(0.5, 0,0.308, 0),Enum.EasingDirection.Out,Enum.EasingStyle.Back,.6,true)
+	wait(.1)
+	script.Parent.Play:TweenPosition(script.Parent.Play.Position - UDim2.new(-.8,0,0,0),Enum.EasingDirection.Out,Enum.EasingStyle.Back,.6,true)
+	wait(.1)
+	script.Parent.Credits:TweenPosition(script.Parent.Credits.Position - UDim2.new(-.8,0,0,0),Enum.EasingDirection.Out,Enum.EasingStyle.Back,.6,true)
+	wait(.3)
+end
+
+for i,v in pairs(script.Parent:GetChildren()) do
+	if v:IsA("TextButton") then
+		local originSize = v.Size
+
+		local function tweenOrigin()
+			v:TweenSize(originSize,Enum.EasingDirection.Out,Enum.EasingStyle.Quad,0.05,true)
+		end
+
+		v.MouseEnter:Connect(function()
+			v:TweenSize(originSize+UDim2.new(0.05,0,0.005,0),Enum.EasingDirection.Out,Enum.EasingStyle.Back,tweenTime,true)
+		end)
+
+		v.MouseLeave:Connect(function()
+			tweenOrigin()
+		end)
+
+		v.MouseButton1Down:Connect(function()
+			v:TweenSize(originSize+UDim2.new(-0.01,0,-0.01,0),Enum.EasingDirection.Out,Enum.EasingStyle.Back,tweenTime,true)
+		end)
+
+		v.MouseButton1Up:Connect(function()
+			tweenOrigin()
+		end)
+	end
+end
+
+script.Parent.Play.MouseButton1Click:Connect(function()
+	script.Parent.ButtonSound:Play()
+	script.Parent.Overlay.Position = UDim2.new(1, 0,0, 0)
+
+	wait(.2)
+	script.Parent.Overlay.Visible = true
+	script.Parent.Overlay:TweenPosition(UDim2.new(0, 0,0, 0),Enum.EasingDirection.Out,Enum.EasingStyle.Back,.6,true)
+
+	wait(.5)
+	for i,v in pairs(script.Parent:GetChildren()) do
+		if v.Name ~= "Overlay" then
+			if v:IsA("Frame") or v:IsA("TextButton") or v:IsA("TextLabel") then
+				v.Visible = false
+			end
+		end
+	end
+
+	wait(.5)
+	script.Parent.Overlay:TweenPosition(UDim2.new(-1, 0,0, 0),Enum.EasingDirection.Out,Enum.EasingStyle.Back,.6,true)
+	blur:Destroy()
+	game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = prevWalkSpeed
+	game.Players.LocalPlayer.Character.Humanoid.JumpHeight = prevJumpHeight
+	game.Players.LocalPlayer.Character.Humanoid.JumpPower = prevJumpPower
+
+	wait(.8)
+	script.Parent.Enabled = false
+end)
+
+script.Parent.Credits.MouseButton1Click:Connect(function()
+	script.Parent.ButtonSound:Play()
+	moveMenu()
+
+	creditsPage.Position = UDim2.new(1.5,0,.5,0)
+	creditsPage:TweenPosition(UDim2.new(.5,0,.5,0),Enum.EasingDirection.Out,Enum.EasingStyle.Back,.3,true)	
+end)
+
+script.Parent.CreditsFrame.Back.MouseButton1Click:Connect(function()
+	script.Parent.ButtonSound:Play()
+	creditsPage.Position = UDim2.new(.5,0,.5,0)
+	creditsPage:TweenPosition(UDim2.new(1.5,0,.5,0),Enum.EasingDirection.Out,Enum.EasingStyle.Back,.3,true)
+
+	moveBackMenu()
+end)

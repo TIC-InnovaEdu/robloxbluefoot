@@ -1,0 +1,18 @@
+local Players = game:GetService("Players")
+local Animation = Instance.new("Animation")  -- Crea una nueva animación
+
+-- Aquí debes cargar tu animación (asegúrate de poner el ID correcto de tu animación)
+Animation.AnimationId = "rbxassetid://"nombre_de_la_animacion"  
+
+-- Evento que se activa cuando un jugador entra al juego
+Players.PlayerAdded:Connect(function(player)
+	-- Asegúrate de que el jugador tenga un personaje antes de intentar aplicar la animación
+	player.CharacterAdded:Connect(function(character)
+		-- Esperamos hasta que el humanoide esté disponible en el personaje
+		local humanoid = character:WaitForChild("Humanoid")
+
+		-- Reproducimos la animación en el humanoide
+		local animationTrack = humanoid:LoadAnimation(Animation)
+		animationTrack:Play()  -- Reproduce la animación
+	end)
+end)

@@ -1,0 +1,154 @@
+local screenGui = script.Parent
+local elementos = screenGui:GetChildren()
+
+local margenSuperior = 5 -- Distancia inicial desde la parte superior
+local separacion = 30 -- Mayor separación entre los elementos
+
+local indice = 0 -- Para controlar la posición vertical
+
+-- Alineación y disposición de elementos
+for _, elemento in ipairs(elementos) do
+    if elemento:IsA("GuiObject") and elemento.Name ~= "Enviar" then -- Excluir el botón "Enviar"
+        elemento.AnchorPoint = Vector2.new(0.5, 0) -- Centra horizontalmente
+        elemento.Position = UDim2.new(0.5, 0, 0, margenSuperior + (indice * separacion)) -- Ajusta la posición
+        indice = indice + 1 -- Incrementa el índice para el siguiente elemento
+    end
+end
+
+-- Referencias a los elementos UI
+local preguntaLabel = script.Parent.TextLabel
+local respuestaTextBox = script.Parent.Respuesta
+local botonEnviar = script.Parent.Enviar
+
+-- Fijar el tamaño del botón y hacer que se quede centrado
+botonEnviar.Size = UDim2.new(0, 200, 0, 50)
+
+-- Ajustar la posición del botón para que esté centrado y hacia abajo
+botonEnviar.Position = UDim2.new(0.5, -100, 0, margenSuperior + (indice * separacion) + 20)  -- Ajuste vertical
+
+-- Lista de preguntas
+local preguntas = {
+    {pregunta = "¿Cuánto es 2 + 2?", respuesta = "4"},
+    {pregunta = "¿Capital de Francia?", respuesta = "París"},
+    {pregunta = "¿Color del cielo?", respuesta = "Azul"},
+    {pregunta = "¿Cuánto es 5 + 3?", respuesta = "8"},
+    {pregunta = "¿Nombre de la capital de España?", respuesta = "Madrid"}
+}
+
+local preguntaActual = 1
+local isTweening = false -- Evitar múltiples animaciones
+
+-- Crear un contador de respuestas correctas
+local respuestasCorrectas = 0
+
+-- Función para normalizar el texto (sin tildes ni puntuación)
+local function normalizarTexto(texto)
+    texto = texto:lower():gsub("á", "a"):gsub("é", "e"):gsub("í", "i"):gsub("ó", "o"):gsub("ú", "u")
+    texto = texto:gsub("%p", "")
+    return texto
+end
+
+-- Lógica para verificar la respuesta del jugador
+local function verificarRespuesta(respuestaUsuario)
+    local respuestaCorrecta = preguntas[preguntaActual].respuesta
+    return normalizarTexto(respuestaUsuario) == normalizarTexto(respuestaCorrecta)
+end
+
+-- Función para cargar la siguiente pregunta
+local function cargarSiguientePregunta()
+    if preguntaActual <= #preguntas then
+        local pregunta = preguntas[preguntaActual]
+        preguntaLabel.Text = pregunta.pregunta
+        preguntaLabel.Visible = true
+        respuestaTextBox.Visible = true
+        botonEnviar.Visible = true
+    else
+        print("¡Se han respondido todas las preguntas!")
+    end
+end
+
+-- Animación al hacer clic en el botón
+botonEnviar.MouseButton1Click:Connect(function()
+    if isTweening then return end  -- Evitar múltiples animaciones
+
+    -- Validar si el TextBox está vacío
+    local respuestaUsuario = respuestaTextBox.Text
+    if respuestaUsuario == "" then
+        print("Por favor, escribe una respuesta.")
+        return  -- No hacer nada si el TextBox está vacío
+    end
+
+    isTweening = true  -- Marcar que el botón está siendo animado
+
+    -- Cambiar la escala del botón visualmente sin bloquear el flujo
+    botonEnviar:TweenSize(
+        UDim2.new(0, 220, 0, 55), -- Tamaño ligeramente mayor (escala visual)
+        Enum.EasingDirection.Out,
+        Enum.EasingStyle.Bounce,
+        0.2
+    )
+
+    -- Esperar un breve momento antes de restaurar el tamaño
+    wait(0.2)
+
+    -- Restaurar tamaño original
+    botonEnviar:TweenSize(
+        UDim2.new(0, 200, 0, 50), -- Tamaño original
+        Enum.EasingDirection.Out,
+        Enum.EasingStyle.Bounce,
+        0.2
+    )
+
+    -- Lógica del cuestionario
+    local esCorrecta = verificarRespuesta(respuestaUsuario)
+
+    -- Limpiar el TextBox
+    respuestaTextBox.Text = ""
+
+    if esCorrecta then
+        print("¡Respuesta correcta!")
+        respuestasCorrectas = respuestasCorrectas + 1 -- Incrementar el contador de respuestas correctas
+    else
+        print("Respuesta incorrecta.")
+	end
+	
+	-- Enviar la cantidad de respuestas correctas al servidor
+	local respuestasCorrectasEvent = game.ReplicatedStorage:WaitForChild("RespuestasCorrectasEvent")
+	respuestasCorrectasEvent:FireServer(respuestasCorrectas)
+
+    -- Ocultar los elementos y cargar la siguiente pregunta
+    preguntaLabel.Visible = false
+    respuestaTextBox.Visible = false
+    botonEnviar.Visible = false
+
+    wait(2) -- Tiempo antes de cargar la siguiente pregunta
+    preguntaActual = preguntaActual + 1
+    cargarSiguientePregunta()
+
+    isTweening = false  -- Permitir nuevas animaciones después de completar el proceso
+end)
+
+-- Convertir el texto a mayúsculas siempre que el jugador escriba algo
+respuestaTextBox.Changed:Connect(function()
+    respuestaTextBox.Text = respuestaTextBox.Text:upper() -- Convertir a mayúsculas
+end)
+
+-- Configuración inicial
+preguntaLabel.Visible = false
+respuestaTextBox.Visible = false
+botonEnviar.Visible = false
+
+-- Mostrar la primera pregunta después de un breve tiempo
+wait(5)
+cargarSiguientePregunta()
+
+-- Enviar la cantidad de respuestas correctas al servidor
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local respuestasCorrectasEvent = ReplicatedStorage:WaitForChild("RespuestasCorrectasEvent")
+
+botonEnviar.MouseButton1Click:Connect(function()
+	-- Si el jugador ha respondido todas las preguntas, envía el número de respuestas correctas
+	if preguntaActual > #preguntas then
+		respuestasCorrectasEvent:FireServer(respuestasCorrectas)  -- Enviar las respuestas correctas al servidor
+	end
+end)

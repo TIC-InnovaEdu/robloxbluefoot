@@ -1,0 +1,14 @@
+local arrivalPoint = game.Workspace:WaitForChild("ArrivalPoint") 
+local Players = game:GetService("Players")
+
+-- Coloca a los jugadores en el Part de llegada después de ser teletransportados
+game.Players.PlayerAdded:Connect(function(player)
+	-- el jugador tenga un personaje antes de intentar moverlo
+	player.CharacterAdded:Connect(function(character)
+		-- el personaje tenga un HumanoidRootPart (el punto central del personaje)
+		local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+		-- Mueve al jugador al Part de llegada (ArrivalPoint)
+		humanoidRootPart.CFrame = arrivalPoint.CFrame
+	end)
+end)

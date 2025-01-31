@@ -1,0 +1,33 @@
+local DTS = game:GetService("DataStoreService"):GetDataStore("Data")
+
+game.Players.PlayerAdded:Connect(function(plr)
+	local stats = Instance.new("Folder", plr)
+	stats.Name = "leaderstats"
+
+	-- Crear la estadística de respuestas correctas
+	local respuestasCorrectas = Instance.new("IntValue", stats)
+	respuestasCorrectas.Name = "RespuestasCorrectas" -- Cambié el nombre de "Kills" a "RespuestasCorrectas"
+	respuestasCorrectas.Value = 0 -- Las respuestas correctas al iniciar el juego
+
+	-- Cargar los datos de respuestas correctas del DataStore
+	local Data
+	local PlayerUserID = plr.UserId
+	local OK, Error = pcall(function()
+		Data = DTS:GetAsync(PlayerUserID)
+	end)
+
+	if OK == true then
+		respuestasCorrectas.Value = Data
+	else
+		warn("ERROR: "..Error)
+	end
+
+	-- Cuando el jugador responde correctamente, aumenta la estadística de respuestas correctas
+	plr:WaitForChild("leaderstats"):WaitForChild("RespuestasCorrectas")
+
+	-- Recibir el número de respuestas correctas del cliente
+	local respuestasCorrectasEvent = game.ReplicatedStorage:WaitForChild("RespuestasCorrectasEvent")
+	respuestasCorrectasEvent.OnServerEvent:Connect(function(player, respuestas)
+		respuestasCorrectas.Value = respuestas
+	end)
+end)
